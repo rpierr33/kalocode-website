@@ -24,10 +24,11 @@ model Project {
 }
 
 model ContactSubmission {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  company   String?
-  message   String
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  company     String?
+  projectType String   @default("Other")
+  message     String
+  createdAt   DateTime @default(now())
 }

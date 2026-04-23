@@ -54,7 +54,7 @@ export function ProjectsGrid() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
         >
-          <a href="/#projects" className="font-mono text-sm text-[#888888] hover:text-[#00FF94] transition-colors">
+          <a href="/projects" className="font-mono text-sm text-[#888888] hover:text-[#00FF94] transition-colors">
             View all projects &rarr;
           </a>
         </motion.div>

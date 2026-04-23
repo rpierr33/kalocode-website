@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CursorGlow } from "@/components/ui/CursorGlow";
+import { Analytics } from "@vercel/analytics/next";
 
 const spaceMono = Space_Mono({
   variable: "--font-space-mono",
@@ -44,6 +45,12 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Kalocode",
+  },
 };
 
 export default function RootLayout({
@@ -62,6 +69,42 @@ export default function RootLayout({
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
+        <Analytics />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Kalocode",
+              url: process.env.NEXT_PUBLIC_SITE_URL || "https://kalocode.com",
+              logo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://kalocode.com"}/icons/icon-512.svg`,
+              description:
+                "Cutting-edge software development agency specializing in AI, robotics, and VR/AR/XR.",
+              sameAs: [
+                "https://github.com/kalocode",
+                "https://linkedin.com/company/kalocode",
+                "https://x.com/kalocode",
+              ],
+              contactPoint: {
+                "@type": "ContactPoint",
+                email: "contact@kalocode.com",
+                contactType: "customer service",
+              },
+            }),
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                  navigator.serviceWorker.register('/sw.js').catch(() => {});
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

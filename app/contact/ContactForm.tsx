@@ -13,6 +13,7 @@ const contactSchema = z.object({
   company: z.string().optional(),
   projectType: z.string().min(1, "Please select a project type"),
   message: z.string().min(10, "Message must be at least 10 characters"),
+  website: z.string().optional(), // honeypot field
 });
 
 type ContactFormData = z.infer<typeof contactSchema>;
@@ -64,6 +65,7 @@ function SuccessAnimation() {
 export function ContactForm() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const {
@@ -81,15 +83,25 @@ export function ContactForm() {
 
   const onSubmit = async (data: ContactFormData) => {
     setSubmitting(true);
+    setErrorMessage(null);
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (res.ok) setSubmitted(true);
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        const body = await res.json().catch(() => null);
+        setErrorMessage(
+          body?.error || `Something went wrong (${res.status}). Please try again.`
+        );
+      }
     } catch {
-      // silently handle
+      setErrorMessage(
+        "Unable to reach our servers. Please check your connection and try again."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -236,6 +248,21 @@ export function ContactForm() {
               />
               {errors.message && <p className="mt-1 text-xs text-red-400">{errors.message.message}</p>}
             </motion.div>
+
+            {/* Honeypot — hidden from humans, bots fill it */}
+            <div className="absolute opacity-0 -z-10 pointer-events-none" aria-hidden="true" tabIndex={-1}>
+              <input {...register("website")} type="text" tabIndex={-1} autoComplete="off" />
+            </div>
+
+            {errorMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-sm text-red-400 font-mono"
+              >
+                {errorMessage}
+              </motion.div>
+            )}
 
             <button
               type="submit"

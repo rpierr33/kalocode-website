@@ -7,7 +7,7 @@ import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSp
 import { Menu, X } from "lucide-react";
 
 const navLinks = [
-  { href: "/#projects", label: "Projects" },
+  { href: "/projects", label: "Projects" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
@@ -49,7 +49,7 @@ export function Navbar() {
   }, []);
 
   const isActive = (href: string) => {
-    if (href.startsWith("/#")) return pathname === "/";
+    if (href === "/projects") return pathname.startsWith("/projects");
     return pathname === href;
   };
 

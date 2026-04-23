@@ -49,7 +49,7 @@ export function Footer() {
             </h4>
             <nav className="flex flex-col gap-3">
               <Link href="/" className="text-sm text-[#888888] hover:text-[#00FF94] transition-colors">Home</Link>
-              <Link href="/#projects" className="text-sm text-[#888888] hover:text-[#00FF94] transition-colors">Projects</Link>
+              <Link href="/projects" className="text-sm text-[#888888] hover:text-[#00FF94] transition-colors">Projects</Link>
               <Link href="/about" className="text-sm text-[#888888] hover:text-[#00FF94] transition-colors">About</Link>
               <Link href="/contact" className="text-sm text-[#888888] hover:text-[#00FF94] transition-colors">Contact</Link>
             </nav>
@@ -96,9 +96,13 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-16 pt-8 border-t border-[#1E1E1E] flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-[#888888]">
-            &copy; {new Date().getFullYear()} Kalocode. All rights reserved.
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-xs text-[#888888]">
+              &copy; {new Date().getFullYear()} Kalocode. All rights reserved.
+            </p>
+            <Link href="/privacy" className="text-xs text-[#888888] hover:text-[#00FF94] transition-colors">Privacy</Link>
+            <Link href="/terms" className="text-xs text-[#888888] hover:text-[#00FF94] transition-colors">Terms</Link>
+          </div>
           <div className="flex items-center gap-6">
             <p className="text-xs text-[#888888]">
               Built by Kalocode with{" "}

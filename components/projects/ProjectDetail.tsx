@@ -18,7 +18,7 @@ export function ProjectDetail({ project, relatedProjects }: ProjectDetailProps) 
       {/* Back nav */}
       <div className="max-w-7xl mx-auto px-6 mb-8">
         <Link
-          href="/#projects"
+          href="/projects"
           className="inline-flex items-center gap-2 text-sm text-[#888888] hover:text-[#00FF94] transition-colors font-mono"
         >
           <ArrowLeft size={16} />

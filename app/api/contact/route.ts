@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const contactSchema = z.object({
   name: z.string().min(2),
@@ -7,12 +8,36 @@ const contactSchema = z.object({
   company: z.string().optional(),
   projectType: z.string().min(1),
   message: z.string().min(10),
+  website: z.string().optional(), // honeypot
 });
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting by IP
+    const forwarded = request.headers.get("x-forwarded-for");
+    const ip = forwarded?.split(",")[0]?.trim() || "unknown";
+    const { allowed, remaining, resetAt } = checkRateLimit(ip);
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(Math.ceil((resetAt - Date.now()) / 1000)),
+            "X-RateLimit-Remaining": "0",
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const data = contactSchema.parse(body);
+
+    // Honeypot check — if filled, silently accept but discard
+    if (data.website) {
+      return NextResponse.json({ success: true });
+    }
 
     // Try to save to database if Prisma is available
     try {
@@ -22,7 +47,8 @@ export async function POST(request: NextRequest) {
           name: data.name,
           email: data.email,
           company: data.company ?? null,
-          message: `[${data.projectType}] ${data.message}`,
+          projectType: data.projectType,
+          message: data.message,
         },
       });
     } catch {
@@ -30,29 +56,44 @@ export async function POST(request: NextRequest) {
       console.log("Contact submission (no DB):", data);
     }
 
-    // Optional: send email via Resend
-    const resendKey = process.env.RESEND_API_KEY;
-    if (resendKey && !resendKey.includes("placeholder")) {
+    // Optional: send email via Brevo
+    const brevoKey = process.env.BREVO_API_KEY;
+    const toEmail = process.env.CONTACT_TO_EMAIL;
+    const fromEmail = process.env.CONTACT_FROM_EMAIL;
+    if (brevoKey && toEmail && fromEmail) {
       try {
-        await fetch("https://api.resend.com/emails", {
+        const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${resendKey}`,
-            "Content-Type": "application/json",
+            "api-key": brevoKey,
+            "content-type": "application/json",
+            accept: "application/json",
           },
           body: JSON.stringify({
-            from: "Kalocode <noreply@kalocode.com>",
-            to: ["contact@kalocode.com"],
+            sender: { name: "Kalocode", email: fromEmail },
+            to: [{ email: toEmail }],
+            replyTo: { email: data.email, name: data.name },
             subject: `New inquiry from ${data.name} — ${data.projectType}`,
-            text: `Name: ${data.name}\nEmail: ${data.email}\nCompany: ${data.company || "N/A"}\nType: ${data.projectType}\n\n${data.message}`,
+            textContent: `Name: ${data.name}\nEmail: ${data.email}\nCompany: ${data.company || "N/A"}\nType: ${data.projectType}\n\n${data.message}`,
           }),
         });
-      } catch {
-        console.log("Email send failed — Resend not configured");
+        if (!resp.ok) {
+          const body = await resp.text().catch(() => "");
+          console.error(`Brevo send failed: ${resp.status} ${body}`);
+        }
+      } catch (err) {
+        console.error("Brevo send threw:", err);
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(
+      { success: true },
+      {
+        headers: {
+          "X-RateLimit-Remaining": String(remaining),
+        },
+      }
+    );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
