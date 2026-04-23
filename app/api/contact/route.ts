@@ -51,9 +51,8 @@ export async function POST(request: NextRequest) {
           message: data.message,
         },
       });
-    } catch {
-      // Database not connected — log instead
-      console.log("Contact submission (no DB):", data);
+    } catch (err) {
+      console.error("prisma contactSubmission.create failed:", err instanceof Error ? err.message : err);
     }
 
     // Optional: send email via Brevo
